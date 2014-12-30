@@ -6,6 +6,8 @@ SoftwareSerial mySerial(2, 3); // RX, TX
 const int potInput = A0;
 const int adjustedPotRange = 860;
 int potValue = 0;
+int shortDelay = 0;
+int longDelay = 0;
   byte note = 0;
   byte resetMIDI = 4;
   byte ledPin = 13; //MIDI traffic inidicator
