@@ -51,7 +51,7 @@ void setup(void)
 void loop(void)
 {
   potValue = analogRead(potInput);
-  potValue = (potValue * 2) - 900;
+  potValue = (potValue * 2) - 900; // Usually in the range 470-900 so adjust to 40 - 900
   // talkMIDI(0xC0, instrument, 0); //Set instrument number. 0xC0 is a 1 data byte command
   switch (beatSelector) {
     case 0:
