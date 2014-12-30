@@ -4,6 +4,7 @@
 SoftwareSerial mySerial(2, 3); // RX, TX
 
 const int potInput = A0;
+const int adjustedPotRange = 860;
 int potValue = 0;
   byte note = 0;
   byte resetMIDI = 4;
@@ -96,73 +97,84 @@ void noBeats(void) {
 }
 
 void beat1(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,36,60);  // Bass Drum 1
-  delay(20);
+  delay(shortDelay);
   noteOn(0,36,60);
-  delay(50);
+  delay(longDelay);
   //noteOff(0,36,60);
   noteOn(0,51,60);  // Ride Cymbal 1
-  delay(20);
+  delay(shortDelay);
   noteOff(0,51,60);
   delay(potValue);
 }
 
 void beat2(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(20);
+  delay(shortDelay);
   noteOn(0,44,60);
-  delay(50);
+  delay(longDelay);
   //noteOff(0,36,60);
   noteOn(0,45,60); // Low Tom
-  delay(20);
+  delay(shortDelay);
   noteOff(0,45,60);
   delay(potValue);
 }
 
 void moarCowbell(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
   noteOn(0,56,60); // Cowbell
-  delay(20);
+  delay(shortDelay);
   noteOff(0,56,60);
   delay(potValue);
 }
 
 void beat4(int potValue) {
   // A little more swing
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,45,60); // Open Hi-hat
-  delay(50);
+  delay(longDelay);
   noteOff(0,45,60);
   delay(potValue);
 
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(35);
+  delay(longDelay);
   noteOff(0,45,60);
   delay(potValue / 2);
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(20);
+  delay(shortDelay);
   noteOff(0,45,60);
   delay(potValue);
 }
 
 void beat5(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,69,60); // Cabasa
   delay(potValue);
   noteOff(0,69,60);
   delay(potValue);
 
   noteOn(0,70,60); // Maracas
-  delay(35);
+  delay(longDelay);
   noteOff(0,70,60);
   delay(potValue / 2);
   noteOn(0,70,60);
-  delay(20);
+  delay(shortDelay);
   noteOff(0,70,60);
   delay(potValue);
 }
 
 void beat6(int potValue) {
   // A little bit of everything
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,67,60); // High Agogo
-  delay(50);
+  delay(longDelay);
   noteOff(0,67,60);
   delay(potValue);
 
@@ -172,12 +184,12 @@ void beat6(int potValue) {
   delay(potValue / 2);
   
   noteOn(0,68,60); // Low Agogo
-  delay(20);
+  delay(shortDelay);
   noteOff(0,68,60);
   delay(potValue / 2);
   
   noteOn(0,58,60); // Vibra Slap
-  delay(50);
+  delay(longDelay);
   noteOff(0,58,60);
   delay(potValue);
 }
