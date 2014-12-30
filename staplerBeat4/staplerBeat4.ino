@@ -197,7 +197,9 @@ void beat6(int potValue) {
 }
 
 ISR(INT0_vect) {
-  beatSelector++;
+  if (millis() - lastPress > 200) {
+    beatSelector++;
+  }
   lastPress = millis();
   Serial.println(beatSelector);
   if (beatSelector == 7) {       // this num should be 1 greater than the highest beat function num
