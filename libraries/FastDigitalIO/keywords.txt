@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map For Bounce2
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+pinAsInput	 KEYWORD2
+pinAsOutput	 KEYWORD2
+pinAsInputPullUp	 KEYWORD2
+digitalLow	 KEYWORD2
+digitalHigh	KEYWORD2
+digitalState	KEYWORD2
+
+#######################################
+# Instances (KEYWORD2)
+#######################################
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+

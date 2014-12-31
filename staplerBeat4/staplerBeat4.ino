@@ -1,5 +1,7 @@
 #include <SoftwareSerial.h>
-#include <avr/interrupt.h>
+#define USE_FAST_DIGITAL_IO
+#include <Bounce.h>
+#include <FlexiTimer2.h>
 
 SoftwareSerial mySerial(2, 3); // RX, TX
 
@@ -7,22 +9,86 @@ const int potInput = A0;
 int potValue = 0;
   byte note = 0;
   byte resetMIDI = 4;
-  byte ledPin = 13; //MIDI traffic inidicator
 volatile int beatSelector = 0; // determines which beat is used - changed by interrupt
 volatile long lastPress = 0;
 unsigned long shutoffTime = 0;
 unsigned long shutoffMinutes = 1;
 int lastLeverPosition = 0;
 
+#define BEAT_SELECTOR_PIN 2
+
+// Instantiate a Bounce object
+Bounce debouncer = Bounce(); 
+
+byte *current_beat = NULL;
+volatile int current_delay;
+volatile boolean currently_delaying;
+volatile byte stepCount = 0;
+const byte ON = 0;
+const byte OFF = 1;
+const byte DELAY = 2;
+const byte STOP = 3;
+
+void PlayTimer()
+{
+  if (current_beat == NULL) return;
+  byte *curBeat = (byte *)&(current_beat[stepCount]);
+  
+  if (currently_delaying){
+    current_delay--;
+    if (current_delay > 0) {
+      return;
+    }
+    else {
+      currently_delaying = false;
+      if (((int)curBeat[0]) == STOP) {
+        current_beat = NULL;
+        stepCount = 0;
+        return;
+      }
+      stepCount += 3;
+    }
+  }
+  while ((int)curBeat[0] < 3) {
+    switch ((int)curBeat[0])
+    {
+      case ON:
+        noteOn(0, curBeat[1], curBeat[2]);
+        stepCount += 3;
+        break;
+      case OFF:
+        noteOff(0, curBeat[1], curBeat[2]);
+        stepCount += 3;
+        break;
+      case DELAY:
+        currently_delaying = true;
+        current_delay = curBeat[1];
+        break;
+      case STOP:
+        currently_delaying = true;
+        current_delay = potValue;
+        break;
+    }
+  }
+}
+
+byte *beat1_data = {ON, 36, 60, DELAY, 20, 0, ON, 36, 60, DELAY, 50, 0, ON, 51, 60, DELAY, 20, 0, OFF, 51, 60, STOP, 0, 0};
 
 void setup(void) 
 {
   
   pinMode(potInput, INPUT);
-  
-  
+  pinMode(BEAT_SELECTOR_PIN, INPUT_PULLUP);
+
+    // After setting up the button, setup the Bounce instance :
+  debouncer.attach(BEAT_SELECTOR_PIN);
+  debouncer.interval(5); // interval in ms
+
   Serial.begin(9600);   
-  Serial.println("noses");
+  Serial.print("sizeof(byte *) = ");
+  Serial.println(sizeof(byte *), DEC);
+  Serial.print("sizeof(byte) = ");
+  Serial.println(sizeof(byte), DEC);
   shutoffTime = shutoffMinutes * 1000 * 20;  // 1 minutes in milliseconds
 
 
@@ -41,24 +107,31 @@ void setup(void)
   talkMIDI(0xB0, 0, 0x78); //Bank select drums
   talkMIDI(0xC0, instrument, 0); //Set instrument number. 0xC0 is a 1 data byte command
   //the instrument number will be in a switch tree once the selector switch is implemented  
-  
+
+  FlexiTimer2::set(500, .001, PlayTimer); // call every 500 1ms "ticks"
+  // FlexiTimer2::set(500, flash); // MsTimer2 style is also supported
+  FlexiTimer2::start();
+  current_beat = beat1_data;
   // setting up interrupts
   sei();                    // enable interrupts
   EIMSK |= (1 << INT0);     // pin 2
   EICRA |= (1 << ISC01);
 }
 
+int oldBeatSelectorButtonValue = 0;
+
 void loop(void)
 {
+  
   potValue = analogRead(potInput);
   potValue = (potValue * 2) - 900;
   // talkMIDI(0xC0, instrument, 0); //Set instrument number. 0xC0 is a 1 data byte command
+  Serial.print("beatSelector is now ");
+  Serial.println(beatSelector, DEC);
   switch (beatSelector) {
-    case 0:
-      noBeats();
-      break;
     case 1:
-      beat1(potValue);
+      //current_beat = (byte *)beat1_data;
+      //beat1(potValue);
       break;
     case 2:
       beat2(potValue);
@@ -94,8 +167,41 @@ void loop(void)
 void noBeats(void) {
   delay(50);
 }
-
 void beat1(int potValue) {
+  int stepCount = 0;
+  while ((int)beat1_data[stepCount][0] < 3) {
+    switch ((int)beat1_data[stepCount][0])
+    {
+      case 0:
+        Serial.print("noteOn(0, ");
+        Serial.print(beat1_data[stepCount][1], DEC);
+        Serial.print(", ");
+        Serial.print(beat1_data[stepCount][2], DEC);
+        Serial.println(");");
+        noteOn(0, beat1_data[stepCount][1], beat1_data[stepCount][2]);
+        break;
+      case 1:
+        Serial.print("noteOff(0, ");
+        Serial.print(beat1_data[stepCount][1], DEC);
+        Serial.print(", ");
+        Serial.print(beat1_data[stepCount][2], DEC);
+        Serial.println(");");
+        noteOff(0, beat1_data[stepCount][1], beat1_data[stepCount][2]);
+        break;
+      case 2:
+        Serial.print("delay(");
+        Serial.print(beat1_data[stepCount][1], DEC);
+        Serial.println(");");
+        delay(beat1_data[stepCount][1]);
+        break;
+      case 3:
+        Serial.println("done");
+        break;
+    }
+    stepCount++;
+  }
+  Serial.println("Exited loop");
+#if 0    
   noteOn(0,36,60);  // Bass Drum 1
   delay(20);
   noteOn(0,36,60);
@@ -104,6 +210,7 @@ void beat1(int potValue) {
   noteOn(0,51,60);  // Ride Cymbal 1
   delay(20);
   noteOff(0,51,60);
+#endif
   delay(potValue);
 }
 
@@ -183,14 +290,13 @@ void beat6(int potValue) {
 }
 
 ISR(INT0_vect) {
-  beatSelector++;
-  lastPress = millis();
-  Serial.println(beatSelector);
-  if (beatSelector == 7) {       // this num should be 1 greater than the highest beat function num
-    beatSelector = 0;            // loop back to zero when no beats are left
-  }
-}
+  debouncer.update();
+  // Get the updated value :
+  int beatSelectorButtonValue = debouncer.read();
 
+  if ((oldBeatSelectorButtonValue == 0) && (beatSelectorButtonValue == 1)) beatSelector = (beatSelector + 1) % 7;
+  oldBeatSelectorButtonValue = beatSelectorButtonValue;
+}
 
 //Send a MIDI note-on message.  Like pressing a piano key
 //channel ranges from 0-15
@@ -205,7 +311,6 @@ void noteOff(byte channel, byte note, byte release_velocity) {
 
 //Plays a MIDI note. Doesn't check to see that cmd is greater than 127, or that data values are less than 127
 void talkMIDI(byte cmd, byte data1, byte data2) {
-  digitalWrite(ledPin, HIGH);
   mySerial.write(cmd);
   mySerial.write(data1);
 
@@ -213,7 +318,5 @@ void talkMIDI(byte cmd, byte data1, byte data2) {
   //(sort of: http://253.ccarh.org/handout/midiprotocol/)
   if( (cmd & 0xF0) <= 0xB0)
     mySerial.write(data2);
-
-  digitalWrite(ledPin, LOW);
 }
 
