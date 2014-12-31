@@ -6,7 +6,10 @@
 SoftwareSerial mySerial(2, 3); // RX, TX
 
 const int potInput = A0;
+const int adjustedPotRange = 860;
 int potValue = 0;
+int shortDelay = 0;
+int longDelay = 0;
   byte note = 0;
   byte resetMIDI = 4;
 volatile int beatSelector = 0; // determines which beat is used - changed by interrupt
@@ -124,7 +127,8 @@ void loop(void)
 {
   
   potValue = analogRead(potInput);
-  potValue = (potValue * 2) - 900;
+  //Serial.println(potValue);
+  potValue = (potValue * 2) - 900; // Usually in the range 470-900 so adjust to 40 - 900
   // talkMIDI(0xC0, instrument, 0); //Set instrument number. 0xC0 is a 1 data byte command
   Serial.print("beatSelector is now ");
   Serial.println(beatSelector, DEC);
@@ -158,7 +162,7 @@ void loop(void)
     beatSelector = 0;
   }
   lastLeverPosition = potValue;
-  Serial.println(potValue);             // debug value
+  //Serial.println(potValue);             // debug value
   //Serial.println(lastPress);
   //Serial.println(millis());
 }
@@ -168,6 +172,7 @@ void noBeats(void) {
   delay(50);
 }
 void beat1(int potValue) {
+<<<<<<< HEAD
   int stepCount = 0;
   while ((int)beat1_data[stepCount][0] < 3) {
     switch ((int)beat1_data[stepCount][0])
@@ -202,74 +207,87 @@ void beat1(int potValue) {
   }
   Serial.println("Exited loop");
 #if 0    
+=======
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
+>>>>>>> origin/master
   noteOn(0,36,60);  // Bass Drum 1
-  delay(20);
+  delay(shortDelay);
   noteOn(0,36,60);
-  delay(50);
+  delay(longDelay);
   //noteOff(0,36,60);
   noteOn(0,51,60);  // Ride Cymbal 1
-  delay(20);
+  delay(shortDelay);
   noteOff(0,51,60);
 #endif
   delay(potValue);
 }
 
 void beat2(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(20);
+  delay(shortDelay);
   noteOn(0,44,60);
-  delay(50);
+  delay(longDelay);
   //noteOff(0,36,60);
   noteOn(0,45,60); // Low Tom
-  delay(20);
+  delay(shortDelay);
   noteOff(0,45,60);
   delay(potValue);
 }
 
 void moarCowbell(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
   noteOn(0,56,60); // Cowbell
-  delay(20);
+  delay(shortDelay);
   noteOff(0,56,60);
   delay(potValue);
 }
 
 void beat4(int potValue) {
   // A little more swing
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,45,60); // Open Hi-hat
-  delay(50);
+  delay(longDelay);
   noteOff(0,45,60);
   delay(potValue);
 
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(35);
+  delay(longDelay);
   noteOff(0,45,60);
   delay(potValue / 2);
   noteOn(0,44,60); // Pedal Hi-hat
-  delay(20);
+  delay(shortDelay);
   noteOff(0,45,60);
   delay(potValue);
 }
 
 void beat5(int potValue) {
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,69,60); // Cabasa
   delay(potValue);
   noteOff(0,69,60);
   delay(potValue);
 
   noteOn(0,70,60); // Maracas
-  delay(35);
+  delay(longDelay);
   noteOff(0,70,60);
   delay(potValue / 2);
   noteOn(0,70,60);
-  delay(20);
+  delay(shortDelay);
   noteOff(0,70,60);
   delay(potValue);
 }
 
 void beat6(int potValue) {
   // A little bit of everything
+  shortDelay = 10.0 * potValue / adjustedPotRange + 10;
+  longDelay = 40.0 * potValue / adjustedPotRange + 10;
   noteOn(0,67,60); // High Agogo
-  delay(50);
+  delay(longDelay);
   noteOff(0,67,60);
   delay(potValue);
 
@@ -279,20 +297,32 @@ void beat6(int potValue) {
   delay(potValue / 2);
   
   noteOn(0,68,60); // Low Agogo
-  delay(20);
+  delay(shortDelay);
   noteOff(0,68,60);
   delay(potValue / 2);
   
   noteOn(0,58,60); // Vibra Slap
-  delay(50);
+  delay(longDelay);
   noteOff(0,58,60);
   delay(potValue);
 }
 
 ISR(INT0_vect) {
+<<<<<<< HEAD
   debouncer.update();
   // Get the updated value :
   int beatSelectorButtonValue = debouncer.read();
+=======
+  if (millis() - lastPress > 200) {
+    beatSelector++;
+  }
+  lastPress = millis();
+  //Serial.println(beatSelector);
+  if (beatSelector == 7) {       // this num should be 1 greater than the highest beat function num
+    beatSelector = 0;            // loop back to zero when no beats are left
+  }
+}
+>>>>>>> origin/master
 
   if ((oldBeatSelectorButtonValue == 0) && (beatSelectorButtonValue == 1)) beatSelector = (beatSelector + 1) % 7;
   oldBeatSelectorButtonValue = beatSelectorButtonValue;
