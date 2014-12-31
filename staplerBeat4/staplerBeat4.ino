@@ -54,6 +54,7 @@ void setup(void)
 void loop(void)
 {
   potValue = analogRead(potInput);
+  //Serial.println(potValue);
   potValue = (potValue * 2) - 900; // Usually in the range 470-900 so adjust to 40 - 900
   // talkMIDI(0xC0, instrument, 0); //Set instrument number. 0xC0 is a 1 data byte command
   switch (beatSelector) {
@@ -88,7 +89,7 @@ void loop(void)
     beatSelector = 0;
   }
   lastLeverPosition = potValue;
-  Serial.println(potValue);             // debug value
+  //Serial.println(potValue);             // debug value
   //Serial.println(lastPress);
   //Serial.println(millis());
 }
@@ -201,7 +202,7 @@ ISR(INT0_vect) {
     beatSelector++;
   }
   lastPress = millis();
-  Serial.println(beatSelector);
+  //Serial.println(beatSelector);
   if (beatSelector == 7) {       // this num should be 1 greater than the highest beat function num
     beatSelector = 0;            // loop back to zero when no beats are left
   }
